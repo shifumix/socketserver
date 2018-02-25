@@ -1,0 +1,35 @@
+Creation du keystore
+sudo openssl pkcs12 -export -in /etc/ssl/certs/server.crt -inkey /etc/ssl/private/server.key -certfile /etc/ssl/certs/server.crt -out hhoareau_keystore.p12
+sudo keytool -importkeystore -srckeystore hhoareau_keystore.p12 -srcstoretype pkcs12 -destkeystore hhoareau.jks -deststoretype JKS
+sudo keytool -changealias -alias 1 -destalias hhoareau -keystore hhoareau.jks
+keytool -list -keystore hhoareau.jks
+sudo chown hhoareau.jks pi:pi
+
+
+Liste des items d'un keystore, permettant de récupérer les alias
+keytool -list -keystore hhoareau_keystore.p12
+
+Creation du truststore (l'alias est récupéré dans la ligne précédente)
+keytool -exportcert -keystore hhoareau.jks -alias hhoareau -file hhoareau.cer
+
+keytool -import -alias hhoareau -file hhoareau.cer -keystore cacerts -storepass changeit
+
+keytool -importcert -file hhoareau.cer -keystore hhoareau.jks -alias 1
+
+Fabrication de l'image Docker sous RPI
+cd socketserver
+docker build -t hhoareau/socketserverarm .
+docker push hhoareau/socketserverarm
+
+Pour remplacer l'image docker
+docker ps
+docker rm -f ...
+
+Pour tester l'image
+docker run -t -p 4567:4567 hhoareau/socketserverarm
+
+Pour tester directement l'appli
+java -cp socketserver.jar SockServer
+
+Pour installer l'image
+docker run -restart=always -d -p 4567:4567 hhoareau/socketserverarm
