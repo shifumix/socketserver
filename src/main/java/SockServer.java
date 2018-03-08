@@ -106,6 +106,7 @@ public class SockServer {
 
         init();
 
+        rs.run();
         scheduler.schedule(rs, 30, TimeUnit.SECONDS);
     }
 
