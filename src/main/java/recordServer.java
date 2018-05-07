@@ -15,7 +15,6 @@ public class recordServer implements Runnable {
         this.address = address;
         this.myIp = myIp;
         this.scheduler=scheduler;
-        logger.info("Preparation demande de connexion pour "+address);
     }
 
     @Override
@@ -23,8 +22,10 @@ public class recordServer implements Runnable {
         logger.info("Tache d'enregistrement du server");
         this.dtLastConnexion=System.currentTimeMillis();
         if(this.connected==false){
-            logger.info("Demande d'ajout a "+address);
-            String s=Tools.rest(address+"/_ah/api/shifumix/v1/addserver?server="+ java.net.URLEncoder.encode(myIp)+"&type=socket&sc=hh4271");
+            logger.info("Je demande une connection à "+address);
+            String computerName="socketServer"+System.currentTimeMillis();
+            String url=address+"/_ah/api/shifumix/v1/addserver?server="+ java.net.URLEncoder.encode(myIp)+"&type=socket&sc=hh4271&computer="+computerName;
+            String s=Tools.rest(url);
             if(s==null)logger.warning("Demande non reçu par le serveur");
             scheduler.schedule(this,30, TimeUnit.SECONDS);
         }

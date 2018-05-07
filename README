@@ -33,3 +33,7 @@ java -cp socketserver.jar SockServer
 
 Pour installer l'image
 docker run -restart=always -d -p 4567:4567 hhoareau/socketserverarm
+
+
+Fabrication d'un socket server sécurisé
+openssl pkcs12 -export -out bundle.pfx -inkey /etc/letsencrypt/live/alpha.shifumix.com/privkey.pem -in cert.pem -certfile /etc/letsencrypt/live/alpha.shifumix.com/fullchain.pem -password pass:not_so_secret

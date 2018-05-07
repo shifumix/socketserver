@@ -31,7 +31,10 @@ public class ChatWebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session user, String message) {
         logger.info("onMessage:"+user.getRemoteAddress().getHostString()+":"+message);
-        SockServer.userUsernameMap.get(user).idShifumix=message.split(",")[0];
-        SockServer.userUsernameMap.get(user).idEvent=message.split(",")[1];
+        SockServer.userUsernameMap.get(user).idUser=message.split(",")[0];
+        if(message.split(",")[1].startsWith("Screen"))
+            SockServer.userUsernameMap.get(user).idScreen=message.split(",")[1];
+        else
+            SockServer.userUsernameMap.get(user).idEvent=message.split(",")[1];
     }
 }

@@ -1,13 +1,17 @@
 #docker run --restart=always -d -p 4567:4567 hhoareau/socketserver
+#docker run --restart=always -d -p 4567:4567 hhoareau/socketserver http://localhost:8080
+#docker run -t -p 4567:4567 hhoareau/socketserver http://localhost:8080
+#sudo docker build -t hhoareau/socketserver .
+#sudo docker push hhoareau/socketserver
+#sudo docker pull hhoareau/socketserver
+#test de l'appli java -cp ShifuMicroServer.jar SparkApplication v1 http://localhost:8080 5271 c:/temp http://localhost
+#java -cp socketserver.jar SockServer http://localhost:8080 4567
+#java -cp socketserver.jar SockServer http://shifumixweb.appspot.com 4567
 FROM java:8
 RUN apt-get update
 RUN /var/lib/dpkg/info/ca-certificates-java.postinst configure
 
-#ADD /out/server.crt /etc/ssl/certs
-#ADD /out/server.key /etc/ssl/private
-#ADD /out/hhoareau.jks .
-#ADD /out/hhoareau.cer .
-ADD /out/*.jar .
+ADD *.jar .
 
 EXPOSE 4567
 CMD ["java", "-cp", "./socketserver.jar","SockServer","https://shifumixweb.appspot.com"]

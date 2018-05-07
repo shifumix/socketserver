@@ -4,6 +4,7 @@ import spark.Spark;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,43 +16,40 @@ import static spark.Spark.*;
 public class SockServer {
     // this map is shared between sessions and threads, so it needs to be thread-safe (http://stackoverflow.com/a/2688817)
     static Map<Session, User> userUsernameMap =new ConcurrentHashMap<Session, User>();
-    static Map<Session, Screen> screensMap =new ConcurrentHashMap<Session, Screen>();
 
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static Logger logger = Logger.getLogger(String.valueOf(SockServer.class));
     static recordServer rs=null;
+    public static final String VERSION = "1.0";
+    static String port="4567";
 
     static int nextUserNumber = 1; //Used for creating the next username
 
     public static void main(String[] args) {
-        logger.info("Lancement du SocketServer. Syntax:<Server_address> <port> <local_adresse>");
+        logger.info("Lancement du SocketServer. Syntax:<Server_address> <port> <local_adresse> <computer_name>");
 
         String serverAddress="https://shifumixweb.appspot.com";
         if(args.length>0)serverAddress=args[0];
-        if(!serverAddress.startsWith("http"))serverAddress="http://"+serverAddress;
 
-        String port="4567";
         if(args.length>1)port=args[1];
 
         String myIp=Tools.rest("http://checkip.amazonaws.com/").replace("\n","")+":"+port;
+        if(!myIp.startsWith("http"))myIp="https://"+myIp;
         if(args.length>2)myIp=args[2]+":"+port;
-        if(!myIp.startsWith("http"))myIp="http://"+myIp;
 
-        logger.info("Adresse IP="+myIp+", port="+port);
+
+        logger.info("Je suis : "+myIp);
 
         webSocket("/chat", ChatWebSocketHandler.class);
         port(Integer.valueOf(port));
 
-        if(args.length>3 && args[3].equals("secure")){
-            myIp=myIp.replace("http:","https:");
-            secure("hhoareau.jks","hh4271!!",null,null);
-        }
+        if(myIp.indexOf("localhost")==-1)
+            secure("keystore.jks","hh4271",null,null);
 
         rs= new recordServer(serverAddress, myIp,scheduler);
 
         get("/state", (request, response) -> {
-            String rc="Users connected:"+userUsernameMap.size();
-            rc+="<br>Screens connected:"+screensMap.size();
+            String rc="Version:"+VERSION+"<br>Users connected:"+userUsernameMap.size();
             rc+="<br>MyIp="+rs.myIp+"<br>Shifumix server="+rs.address+" - Connected:"+rs.connected+"<br>";
             rc+="LastConnexion:"+new SimpleDateFormat("HH:mm").format(new Date(rs.dtLastConnexion));
 
@@ -59,10 +57,18 @@ public class SockServer {
                 rc+="<br>Users:";for(User u:userUsernameMap.values())rc+=u.toHTML();
             }
 
-            return rc+"<br><br>" +
-                    "<a target='_blank' href='"+rs.myIp+"/reconnect'>Reconnect</a><br>" +
-                    "<a target='_blank' href='https://console.cloud.google.com/datastore/entities/query?project=shifumixweb&ns=&kind=ShifuServer'>Servers</a>" +
-                    "<a target='_blank' href='"+rs.myIp+"/sendToAll?message=close'>Close client</a>";
+            return rc;
+        });
+
+        get("/commands",(request,response) -> {
+            String url=rs.myIp;
+            return "<a href='"+url+"/reconnect'>Reconnect</a><br>" +
+                    "<a href='https://console.cloud.google.com/datastore/entities/query?project=shifumixweb&ns=&kind=ShifuServer'>Servers</a><br>" +
+                    "<a href='"+url+"/sendToAll?message=close'>Close client</a><br>"+
+                    "<a href='"+url+"/state'>State</a>"+
+                    "<a href='"+url+"/close'>Close</a>"+
+                    "<a href='"+url+"/refresh'>Refresh</a>";
+
         });
 
 
@@ -72,11 +78,16 @@ public class SockServer {
             return "ok";
         });
 
+
         post("/refresh", (request, response) -> {
             rs.connected=true;
-            SockServer.broadcastMessage("server",null,"refresh");
+            String body=request.body();
+            for(Map.Entry<Session,User> v:userUsernameMap.entrySet())
+                if(body==null || body.length()==0 || v.getValue().idScreen.equals(body))
+                    v.getKey().getRemote().sendString("refresh");
             return "ok";
         });
+
 
         post("/close", (request, response) -> {
             rs.connected=false;
@@ -95,10 +106,11 @@ public class SockServer {
         });
 
 
-        post("/join", (request, response) -> {
+        post("/join/:from/:computer", (request, response) -> {
             String from=request.params("from");
             if(from==null)from=request.host();
-            logger.info(from+" adresse un join");
+
+            logger.info(from+" me confirme la connexion");
 
             rs.connected=true;
             return System.currentTimeMillis();
