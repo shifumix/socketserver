@@ -1,6 +1,8 @@
-#docker run --restart=always -d -p 4567:4567 hhoareau/socketserverarm
-#docker run --restart=always -d -p 4567:4567 hhoareau/socketserverarm http://localhost:8080
-#docker run -t -p 4567:4567 hhoareau/socketserverarm http://localhost:8080
+#docker rm -f socketserver
+#docker run --restart=always --name socketserver -d -p 4567:4567 hhoareau/socketserverarm
+#docker run --restart=always --name socketserver -d -p 4567:4567 hhoareau/socketserverarm http://localhost:8080
+#docker run -t -p 4567:4567 --name socketserver hhoareau/socketserverarm http://localhost:8080
+#docker run -t -p 4567:4567 --name socketserver hhoareau/socketserverarm
 #sudo docker build -t hhoareau/socketserverarm .
 #sudo docker push hhoareau/socketserverarm
 #sudo docker pull hhoareau/socketserverarm
